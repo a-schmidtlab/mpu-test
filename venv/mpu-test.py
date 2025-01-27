@@ -1,6 +1,8 @@
 import smbus2 as smbus
 import time
 import math
+from flask import Flask, jsonify, send_from_directory
+import threading
 
 class MPU6050:
     def __init__(self):
@@ -48,29 +50,46 @@ class MPU6050:
             'gyroscope': {'x': Gx, 'y': Gy, 'z': Gz}
         }
 
-def main():
-    try:
-        mpu = MPU6050()
-        print("MPU6050 sensor initialized")
-        
-        while True:
-            data = mpu.get_data()
-            print("\nAccelerometer data:")
-            print(f"X: {data['accelerometer']['x']:.2f}g")
-            print(f"Y: {data['accelerometer']['y']:.2f}g")
-            print(f"Z: {data['accelerometer']['z']:.2f}g")
-            
-            print("\nGyroscope data:")
-            print(f"X: {data['gyroscope']['x']:.2f}°/s")
-            print(f"Y: {data['gyroscope']['y']:.2f}°/s")
-            print(f"Z: {data['gyroscope']['z']:.2f}°/s")
-            
+app = Flask(__name__, static_folder='static')
+
+# Global variable to store latest sensor data
+current_data = {
+    'accelerometer': {'x': 0, 'y': 0, 'z': 0},
+    'gyroscope': {'x': 0, 'y': 0, 'z': 0}
+}
+
+@app.route('/')
+def index():
+    return send_from_directory('static', 'index.html')
+
+@app.route('/static/<path:path>')
+def serve_static(path):
+    return send_from_directory('static', path)
+
+@app.route('/data')
+def get_sensor_data():
+    return jsonify(current_data)
+
+def sensor_loop():
+    mpu = MPU6050()
+    print("MPU6050 sensor initialized")
+    
+    while True:
+        try:
+            global current_data
+            current_data = mpu.get_data()
+            time.sleep(0.1)  # Update at 10Hz
+        except Exception as e:
+            print(f"Error reading sensor: {str(e)}")
             time.sleep(1)
-            
-    except KeyboardInterrupt:
-        print("\nProgram terminated by user")
-    except Exception as e:
-        print(f"Error: {str(e)}")
+
+def main():
+    # Start sensor reading in a separate thread
+    sensor_thread = threading.Thread(target=sensor_loop, daemon=True)
+    sensor_thread.start()
+    
+    # Run Flask app
+    app.run(host='0.0.0.0', port=5000)
 
 if __name__ == "__main__":
     main()

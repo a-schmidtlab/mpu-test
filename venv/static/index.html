@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MPU6050 3D Visualization</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #data-display {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            font-family: monospace;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="data-display">
+        Accelerometer:<br>
+        X: <span id="acc-x">0</span>g<br>
+        Y: <span id="acc-y">0</span>g<br>
+        Z: <span id="acc-z">0</span>g<br>
+        <br>
+        Gyroscope:<br>
+        X: <span id="gyro-x">0</span>°/s<br>
+        Y: <span id="gyro-y">0</span>°/s<br>
+        Z: <span id="gyro-z">0</span>°/s
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="/static/visualization.js"></script>
+</body>
+</html> 
