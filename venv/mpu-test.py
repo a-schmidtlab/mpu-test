@@ -11,6 +11,13 @@ class MPU6050:
         
         # Wake up the MPU6050
         self.bus.write_byte_data(self.device_address, 0x6B, 0)
+        
+        # Increase filter coefficient for more responsiveness
+        self.filter_coefficient = 0.3  # Changed from 0.1 to 0.3 for more responsive movement
+        self.last_reading = {
+            'accelerometer': {'x': 0, 'y': 0, 'z': 0},
+            'gyroscope': {'x': 0, 'y': 0, 'z': 0}
+        }
     
     def read_raw_data(self, addr):
         # Read raw 16-bit value
@@ -45,10 +52,32 @@ class MPU6050:
         Gy = gyro_y/131.0
         Gz = gyro_z/131.0
         
-        return {
+        # Apply low-pass filter
+        current_reading = {
             'accelerometer': {'x': Ax, 'y': Ay, 'z': Az},
             'gyroscope': {'x': Gx, 'y': Gy, 'z': Gz}
         }
+        
+        filtered_reading = self.apply_filter(current_reading)
+        self.last_reading = filtered_reading
+        
+        return filtered_reading
+
+    def apply_filter(self, current):
+        filtered = {
+            'accelerometer': {},
+            'gyroscope': {}
+        }
+        
+        # Apply filter to each axis
+        for sensor in ['accelerometer', 'gyroscope']:
+            for axis in ['x', 'y', 'z']:
+                filtered[sensor][axis] = (
+                    self.filter_coefficient * current[sensor][axis] +
+                    (1 - self.filter_coefficient) * self.last_reading[sensor][axis]
+                )
+        
+        return filtered
 
 app = Flask(__name__, static_folder='static')
 
@@ -78,7 +107,7 @@ def sensor_loop():
         try:
             global current_data
             current_data = mpu.get_data()
-            time.sleep(0.1)  # Update at 10Hz
+            time.sleep(0.02)  # Update at 50Hz for smoother visualization
         except Exception as e:
             print(f"Error reading sensor: {str(e)}")
             time.sleep(1)
@@ -88,8 +117,8 @@ def main():
     sensor_thread = threading.Thread(target=sensor_loop, daemon=True)
     sensor_thread.start()
     
-    # Run Flask app
-    app.run(host='0.0.0.0', port=5000)
+    # Run Flask app on port 5001 instead
+    app.run(host='0.0.0.0', port=5001)
 
 if __name__ == "__main__":
     main()
