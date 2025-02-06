@@ -86,7 +86,7 @@ Thanks to:
 
 ---
 
-*Created with digital towels by Axel*
+*Created with digital towels by Axel Schmidt  *
 *Year 2025 (Earth time)* 
 
 *Remember: DON'T PANIC, it's just code.* 
